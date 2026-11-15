@@ -39,6 +39,14 @@ async def test_create_event_blank_title(client: AsyncClient):
 
 
 @pytest.mark.asyncio
+async def test_create_event_blank_location(client: AsyncClient):
+    token = await get_auth_token(client)
+    bad = {**EVENT_PAYLOAD, "location": "   "}
+    resp = await client.post("/events", json=bad, headers={"Authorization": f"Bearer {token}"})
+    assert resp.status_code == 422
+
+
+@pytest.mark.asyncio
 async def test_create_event_zero_capacity(client: AsyncClient):
     token = await get_auth_token(client)
     bad = {**EVENT_PAYLOAD, "max_capacity": 0}
@@ -80,6 +88,18 @@ async def test_list_events_filter_title(client: AsyncClient):
     assert resp.status_code == 200
     items = resp.json()["items"]
     assert all("Alpha" in item["title"] for item in items)
+
+
+@pytest.mark.asyncio
+async def test_list_events_filter_date(client: AsyncClient):
+    token = await get_auth_token(client)
+    await client.post("/events", json={**EVENT_PAYLOAD, "event_date": "2026-11-20T10:00:00Z"}, headers={"Authorization": f"Bearer {token}"})
+    await client.post("/events", json={**EVENT_PAYLOAD, "event_date": "2026-12-25T10:00:00Z"}, headers={"Authorization": f"Bearer {token}"})
+    resp = await client.get("/events?date=2026-11-20")
+    assert resp.status_code == 200
+    items = resp.json()["items"]
+    assert len(items) >= 1
+    assert all("2026-11-20" in item["event_date"] for item in items)
 
 
 @pytest.mark.asyncio

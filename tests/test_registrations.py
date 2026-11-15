@@ -23,23 +23,18 @@ async def _create_event(client: AsyncClient, token: str, capacity: int = 2) -> d
     return resp.json()
 
 
-async def _register_user(client: AsyncClient, event_id: int, user_id: int, token: str) -> dict:
-    resp = await client.post(
+async def _register_user(client: AsyncClient, event_id: int, user_id: int, token: str):
+    return await client.post(
         f"/events/{event_id}/registrations",
         json={"user_id": user_id},
         headers={"Authorization": f"Bearer {token}"},
     )
-    return resp
 
 
 @pytest.mark.asyncio
 async def test_register_success(client: AsyncClient):
     token = await get_auth_token(client, "user_a")
-    # get user_a's id
-    login_resp = await client.post("/auth/login", json={"username": "user_a", "password": "TestPass123"})
-    # create event
     event = await _create_event(client, token)
-    # register user_a (id=1 since first user)
     user_resp = await client.post("/auth/register", json={"username": "user_b", "email": "b@test.com", "password": "TestPass123"})
     user_b_id = user_resp.json()["id"]
 
@@ -68,7 +63,6 @@ async def test_register_capacity_limit_enforced(client: AsyncClient):
     token = await get_auth_token(client, "organizer")
     event = await _create_event(client, token, capacity=1)
 
-    # Create two more users
     u1 = (await client.post("/auth/register", json={"username": "u1", "email": "u1@t.com", "password": "TestPass123"})).json()["id"]
     u2 = (await client.post("/auth/register", json={"username": "u2", "email": "u2@t.com", "password": "TestPass123"})).json()["id"]
 
@@ -123,7 +117,6 @@ async def test_cancel_registration(client: AsyncClient):
     resp = await client.delete(f"/registrations/{reg['id']}", headers={"Authorization": f"Bearer {token}"})
     assert resp.status_code == 204
 
-    # Verify cancelled
     regs = (await client.get(f"/events/{event['id']}/registrations")).json()
     assert all(r["id"] != reg["id"] for r in regs)
 
@@ -133,6 +126,12 @@ async def test_cancel_registration_not_found(client: AsyncClient):
     token = await get_auth_token(client, "user_i")
     resp = await client.delete("/registrations/9999", headers={"Authorization": f"Bearer {token}"})
     assert resp.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_cancel_registration_requires_auth(client: AsyncClient):
+    resp = await client.delete("/registrations/1")
+    assert resp.status_code == 401
 
 
 @pytest.mark.asyncio
