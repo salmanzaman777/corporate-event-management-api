@@ -11,7 +11,9 @@ app/
 ├── models.py        # SQLAlchemy ORM models (User, Event, Registration)
 ├── schemas.py       # Pydantic request/response schemas
 ├── services.py      # Business logic and all database operations
-└── main.py          # FastAPI app, routes, JWT dependency
+└── main.py          # FastAPI app, routes, JWT dependency, CORS, root frontend route
+static/
+└── index.html       # Single-file modern aesthetic HTML/CSS/JS frontend
 tests/
 ├── conftest.py      # Fixtures: in-memory SQLite engine, HTTPX client, auth helper
 ├── test_auth.py     # Auth endpoint tests
@@ -63,15 +65,15 @@ CREATE DATABASE event_db;
 
 Tables are created automatically on first startup.
 
-## Running the API
+## Running the Application
 
 ```bash
 uvicorn app.main:app --reload
 ```
 
-API available at `http://127.0.0.1:8000`  
-Swagger UI at `http://127.0.0.1:8000/docs`  
-ReDoc at `http://127.0.0.1:8000/redoc`
+* **Interactive Frontend**: `http://127.0.0.1:8000/` (Modern corporate UI featuring the world's top 6 event categories, JWT authentication, real-time capacity progress bars, and attendee inspector)
+* **Swagger OpenAPI Docs**: `http://127.0.0.1:8000/docs`
+* **ReDoc Documentation**: `http://127.0.0.1:8000/redoc`
 
 ## API Overview
 

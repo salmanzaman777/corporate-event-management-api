@@ -6,9 +6,12 @@ Provides OpenAPI documentation at /docs and enforces RFC 6750 Bearer authenticat
 
 from contextlib import asynccontextmanager
 from datetime import date as date_type
+from pathlib import Path as SysPath
 from typing import Annotated, Optional
 
 from fastapi import Depends, FastAPI, HTTPException, Path, Query, Security, status
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -37,6 +40,25 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan,
 )
+
+# Enable CORS for frontend clients
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+STATIC_INDEX = SysPath(__file__).resolve().parent.parent / "static" / "index.html"
+
+
+@app.get("/", include_in_schema=False)
+async def serve_root():
+    """Serve modern single-file HTML/JS frontend if available; otherwise redirect info."""
+    if STATIC_INDEX.exists():
+        return FileResponse(STATIC_INDEX)
+    return {"message": "Corporate Event Management API. Visit /docs for OpenAPI documentation."}
 
 # ---------------------------------------------------------------------------
 # Authentication dependencies
