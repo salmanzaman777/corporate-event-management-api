@@ -5,17 +5,29 @@ All I/O in this project is async — the sync SQLAlchemy API is never used.
 """
 
 import os
+import socket
 from collections.abc import AsyncGenerator
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase
 
-# Read from env; fall back to a localhost default for local dev only.
-# In production, always set DATABASE_URL explicitly.
-DATABASE_URL: str = os.getenv(
-    "DATABASE_URL",
-    "postgresql+asyncpg://postgres:postgres@localhost:5432/event_db",
-)
+
+def _resolve_database_url() -> str:
+    """Resolve database URL: use explicit env var, or fallback to SQLite if Postgres is offline."""
+    env_url = os.getenv("DATABASE_URL")
+    if env_url:
+        return env_url
+
+    # Check if local PostgreSQL is actively listening on port 5432
+    try:
+        with socket.create_connection(("127.0.0.1", 5432), timeout=0.3):
+            return "postgresql+asyncpg://postgres:postgres@localhost:5432/event_db"
+    except OSError:
+        # Fall back to zero-config local async SQLite so app runs immediately in browser
+        return "sqlite+aiosqlite:///./event_db.sqlite"
+
+
+DATABASE_URL: str = _resolve_database_url()
 
 # echo=False keeps logs clean; pool_pre_ping checks connections before reuse.
 engine = create_async_engine(DATABASE_URL, echo=False, pool_pre_ping=True)

@@ -16,11 +16,77 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app import models, schemas, services
-from app.db import Base, engine, get_db
+from app.db import AsyncSessionLocal, Base, engine, get_db
 
 # ---------------------------------------------------------------------------
-# Application lifespan — auto-creates database tables on startup
+# Application lifespan — auto-creates database tables and seeds demo events
 # ---------------------------------------------------------------------------
+
+
+async def _seed_demo_events(session: AsyncSession):
+    """Seed initial corporate showcase events if catalog is empty."""
+    from datetime import datetime, timedelta, timezone
+    from sqlalchemy import select, func
+    from app.models import Event, User
+    from app.services import hash_password
+
+    count = (await session.scalar(select(func.count()).select_from(Event))) or 0
+    if count == 0:
+        now = datetime.now(tz=timezone.utc)
+        # Create default demo user
+        demo_user = User(
+            username="salman_dev",
+            email="salman@acmecorp.com",
+            hashed_password=hash_password("Secret123!"),
+        )
+        session.add(demo_user)
+
+        sample_events = [
+            Event(
+                title="🚀 Acme NextGen Platform · Global Product Launch",
+                description="Unveiling our high-performance autonomous agent orchestration architecture.",
+                event_date=now + timedelta(days=5, hours=10),
+                location="Grand Tech Auditorium · San Francisco & Virtual",
+                max_capacity=100,
+            ),
+            Event(
+                title="🛠️ Hands-On FastAPI & SQLAlchemy 2.0 Workshop",
+                description="Interactive deep dive into async python backend development and design patterns.",
+                event_date=now + timedelta(days=8, hours=14),
+                location="Innovation Lab Room B · Acme HQ",
+                max_capacity=30,
+            ),
+            Event(
+                title="🤝 Annual Team Building & Wilderness Retreat",
+                description="Collaborative problem-solving, outdoor challenges, and team bonding sessions.",
+                event_date=now + timedelta(days=14, hours=9),
+                location="Pinecrest Lodge · Lake Tahoe",
+                max_capacity=45,
+            ),
+            Event(
+                title="🎤 Acme Enterprise Tech & Cloud Summit 2026",
+                description="Keynotes from industry leaders on scalable distributed backends and zero-trust security.",
+                event_date=now + timedelta(days=21, hours=9),
+                location="Convention Center Main Hall",
+                max_capacity=250,
+            ),
+            Event(
+                title="🏆 Annual Corporate Gala & Excellence Awards",
+                description="Celebrating outstanding innovations, milestone deliveries, and team achievements.",
+                event_date=now + timedelta(days=30, hours=19),
+                location="The Starlight Ballroom · Metropolis",
+                max_capacity=150,
+            ),
+            Event(
+                title="🌐 Executive Leadership & Future Strategy Keynote",
+                description="Strategic vision presentation outlining our roadmap for AI-driven business solutions.",
+                event_date=now + timedelta(days=40, hours=11),
+                location="Executive Boardroom 101 · Virtual Stream",
+                max_capacity=60,
+            ),
+        ]
+        session.add_all(sample_events)
+        await session.commit()
 
 
 @asynccontextmanager
@@ -28,6 +94,9 @@ async def lifespan(app: FastAPI):
     """Ensure database schema tables exist on application startup."""
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+    # Seed demo showcase events on first run
+    async with AsyncSessionLocal() as session:
+        await _seed_demo_events(session)
     yield
 
 

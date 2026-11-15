@@ -63,8 +63,8 @@ async def test_register_capacity_limit_enforced(client: AsyncClient):
     token = await get_auth_token(client, "organizer")
     event = await _create_event(client, token, capacity=1)
 
-    u1 = (await client.post("/auth/register", json={"username": "u1", "email": "u1@t.com", "password": "TestPass123"})).json()["id"]
-    u2 = (await client.post("/auth/register", json={"username": "u2", "email": "u2@t.com", "password": "TestPass123"})).json()["id"]
+    u1 = (await client.post("/auth/register", json={"username": "user_one", "email": "u1@t.com", "password": "TestPass123"})).json()["id"]
+    u2 = (await client.post("/auth/register", json={"username": "user_two", "email": "u2@t.com", "password": "TestPass123"})).json()["id"]
 
     r1 = await _register_user(client, event["id"], u1, token)
     assert r1.status_code == 201
