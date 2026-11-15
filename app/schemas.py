@@ -28,6 +28,7 @@ class UserCreate(BaseModel):
     @field_validator("username")
     @classmethod
     def validate_username(cls, v: str) -> str:
+        """Validate username contains alphanumeric characters and underscores only."""
         v = v.strip()
         # Enforce alphanumeric + underscores only
         if not re.match(r"^[a-zA-Z0-9_]+$", v):
@@ -77,6 +78,7 @@ class EventCreate(BaseModel):
     @field_validator("title", "location")
     @classmethod
     def reject_blank_whitespace(cls, v: str) -> str:
+        """Reject empty or whitespace-only input and return stripped string."""
         clean = v.strip()
         if not clean:
             raise ValueError("field cannot be empty or whitespace only")
@@ -95,6 +97,7 @@ class EventUpdate(BaseModel):
     @field_validator("title", "location")
     @classmethod
     def reject_blank_whitespace(cls, v: Optional[str]) -> Optional[str]:
+        """Reject whitespace-only updates when field is explicitly provided."""
         if v is not None:
             clean = v.strip()
             if not clean:

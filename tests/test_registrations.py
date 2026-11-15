@@ -15,6 +15,7 @@ EVENT_PAYLOAD = {
 
 
 async def _create_event(client: AsyncClient, token: str, capacity: int = 2) -> dict:
+    """Helper: create an authenticated event with custom attendee capacity."""
     resp = await client.post(
         "/events",
         json={**EVENT_PAYLOAD, "max_capacity": capacity},
@@ -24,6 +25,7 @@ async def _create_event(client: AsyncClient, token: str, capacity: int = 2) -> d
 
 
 async def _register_user(client: AsyncClient, event_id: int, user_id: int, token: str):
+    """Helper: submit an authenticated event registration request."""
     return await client.post(
         f"/events/{event_id}/registrations",
         json={"user_id": user_id},

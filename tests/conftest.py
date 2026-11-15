@@ -36,6 +36,7 @@ async def client(db_engine):
     )
 
     async def override_get_db():
+        """Yield isolated async session attached to in-memory test database."""
         async with test_session_factory() as session:
             yield session
 
