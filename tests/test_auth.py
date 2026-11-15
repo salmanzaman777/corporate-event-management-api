@@ -26,6 +26,20 @@ async def test_register_duplicate_username(client: AsyncClient):
 
 
 @pytest.mark.asyncio
+async def test_register_invalid_username_characters(client: AsyncClient):
+    payload = {"username": "bad user!", "email": "bad@acme.com", "password": "Password1!"}
+    resp = await client.post("/auth/register", json=payload)
+    assert resp.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_register_short_password(client: AsyncClient):
+    payload = {"username": "shortpass", "email": "short@acme.com", "password": "123"}
+    resp = await client.post("/auth/register", json=payload)
+    assert resp.status_code == 422
+
+
+@pytest.mark.asyncio
 async def test_login_success(client: AsyncClient):
     await client.post("/auth/register", json={
         "username": "carol",
@@ -46,3 +60,4 @@ async def test_login_wrong_password(client: AsyncClient):
     })
     resp = await client.post("/auth/login", json={"username": "dave", "password": "wrong"})
     assert resp.status_code == 401
+    assert "WWW-Authenticate" in resp.headers

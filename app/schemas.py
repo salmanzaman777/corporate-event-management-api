@@ -1,11 +1,12 @@
 """Pydantic schemas for request validation and API responses.
 
-Each domain has three schema variants:
-- Create   — fields accepted when creating a resource (no id/timestamps)
-- Update   — all fields optional, for PATCH-style partial updates via PUT
-- Response — the shape returned to the client
+Validation rules:
+- Non-blank strings stripped of surrounding whitespace.
+- Username constrained to alphanumeric characters and underscores.
+- Passwords bounded (8-128 chars) to mitigate hashing DoS.
 """
 
+import re
 from datetime import datetime
 from typing import Optional
 
@@ -13,20 +14,29 @@ from pydantic import BaseModel, EmailStr, Field, field_validator
 
 
 # ---------------------------------------------------------------------------
-# User schemas
+# User & Auth schemas
 # ---------------------------------------------------------------------------
 
 
 class UserCreate(BaseModel):
-    """Fields required to register a new user."""
+    """Registration payload for a new user account."""
 
     username: str = Field(..., min_length=3, max_length=50, examples=["john_doe"])
     email: EmailStr = Field(..., examples=["john@acmecorp.com"])
-    password: str = Field(..., min_length=8, examples=["s3cr3tP@ss"])
+    password: str = Field(..., min_length=8, max_length=128, examples=["s3cr3tP@ss"])
+
+    @field_validator("username")
+    @classmethod
+    def validate_username(cls, v: str) -> str:
+        v = v.strip()
+        # Enforce alphanumeric + underscores only
+        if not re.match(r"^[a-zA-Z0-9_]+$", v):
+            raise ValueError("username may only contain letters, numbers, and underscores")
+        return v.lower()
 
 
 class UserResponse(BaseModel):
-    """Public user representation (no password exposed)."""
+    """Public user profile; passwords and hashes are omitted."""
 
     id: int
     username: str
@@ -36,20 +46,15 @@ class UserResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
-# ---------------------------------------------------------------------------
-# Auth schemas
-# ---------------------------------------------------------------------------
-
-
 class LoginRequest(BaseModel):
-    """Credentials submitted to obtain a JWT token."""
+    """User credentials submitted for JWT access token."""
 
-    username: str = Field(..., examples=["john_doe"])
-    password: str = Field(..., examples=["s3cr3tP@ss"])
+    username: str = Field(..., min_length=1, max_length=50, examples=["john_doe"])
+    password: str = Field(..., min_length=1, max_length=128, examples=["s3cr3tP@ss"])
 
 
 class TokenResponse(BaseModel):
-    """JWT access token returned after successful login."""
+    """Bearer token response returned upon successful authentication."""
 
     access_token: str
     token_type: str = "bearer"
@@ -61,42 +66,45 @@ class TokenResponse(BaseModel):
 
 
 class EventCreate(BaseModel):
-    """Payload for creating a new event."""
+    """Payload to create a new corporate event."""
 
     title: str = Field(..., min_length=1, max_length=200, examples=["Python Workshop"])
-    description: Optional[str] = Field(None, examples=["Hands-on intro to FastAPI."])
+    description: Optional[str] = Field(None, max_length=2000, examples=["FastAPI deep dive."])
     event_date: datetime = Field(..., examples=["2026-12-01T14:00:00Z"])
-    location: str = Field(..., min_length=1, max_length=300, examples=["HQ Conference Room A"])
-    max_capacity: int = Field(..., gt=0, examples=[50])
+    location: str = Field(..., min_length=1, max_length=300, examples=["HQ Conf Room A"])
+    max_capacity: int = Field(..., gt=0, le=100000, examples=[50])
 
-    @field_validator("title")
+    @field_validator("title", "location")
     @classmethod
-    def title_not_blank(cls, v: str) -> str:
-        """Reject titles that are only whitespace."""
-        if not v.strip():
-            raise ValueError("title must not be blank")
-        return v.strip()
+    def reject_blank_whitespace(cls, v: str) -> str:
+        clean = v.strip()
+        if not clean:
+            raise ValueError("field cannot be empty or whitespace only")
+        return clean
 
 
 class EventUpdate(BaseModel):
-    """All fields are optional; only supplied fields are changed."""
+    """Optional fields for partial event updates."""
 
     title: Optional[str] = Field(None, min_length=1, max_length=200)
-    description: Optional[str] = None
+    description: Optional[str] = Field(None, max_length=2000)
     event_date: Optional[datetime] = None
     location: Optional[str] = Field(None, min_length=1, max_length=300)
-    max_capacity: Optional[int] = Field(None, gt=0)
+    max_capacity: Optional[int] = Field(None, gt=0, le=100000)
 
-    @field_validator("title")
+    @field_validator("title", "location")
     @classmethod
-    def title_not_blank(cls, v: Optional[str]) -> Optional[str]:
-        if v is not None and not v.strip():
-            raise ValueError("title must not be blank")
-        return v.strip() if v else v
+    def reject_blank_whitespace(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None:
+            clean = v.strip()
+            if not clean:
+                raise ValueError("field cannot be empty or whitespace only")
+            return clean
+        return v
 
 
 class EventResponse(BaseModel):
-    """Full event representation including server-generated fields."""
+    """Full event representation."""
 
     id: int
     title: str
@@ -116,13 +124,13 @@ class EventResponse(BaseModel):
 
 
 class RegistrationCreate(BaseModel):
-    """Payload to register a user for an event."""
+    """Payload to register an employee for an event."""
 
     user_id: int = Field(..., gt=0, examples=[1])
 
 
 class RegistrationResponse(BaseModel):
-    """Registration record returned to the client."""
+    """Confirmed registration record."""
 
     id: int
     event_id: int
@@ -133,12 +141,12 @@ class RegistrationResponse(BaseModel):
 
 
 # ---------------------------------------------------------------------------
-# Shared / utility schemas
+# Paginated list schema
 # ---------------------------------------------------------------------------
 
 
 class PaginatedEvents(BaseModel):
-    """Paginated list of events with total count."""
+    """Envelope for paginated event queries."""
 
     total: int
     skip: int

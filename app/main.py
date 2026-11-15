@@ -1,28 +1,28 @@
 """FastAPI application entry point.
 
-Registers all routers and runs database table creation on startup.
-Routes are thin: they validate input (Pydantic handles that), call the
-appropriate service function, and map the result to the correct HTTP response.
+Thin route handlers delegating entirely to services.
+Provides OpenAPI documentation at /docs and enforces RFC 6750 Bearer authentication.
 """
 
 from contextlib import asynccontextmanager
+from datetime import date as date_type
 from typing import Annotated, Optional
 
-from fastapi import Depends, FastAPI, HTTPException, Query, Security, status
+from fastapi import Depends, FastAPI, HTTPException, Path, Query, Security, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app import schemas, services
+from app import models, schemas, services
 from app.db import Base, engine, get_db
 
 # ---------------------------------------------------------------------------
-# Application lifespan — create tables on startup
+# Application lifespan — auto-creates database tables on startup
 # ---------------------------------------------------------------------------
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Create all database tables if they do not already exist."""
+    """Ensure database schema tables exist on application startup."""
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     yield
@@ -31,16 +31,15 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="Corporate Event Management API",
     description=(
-        "Internal event system for Acme Corp. "
-        "Supports full event CRUD, attendee registration with business-rule enforcement, "
-        "JWT authentication, pagination, and search/filtering."
+        "Internal REST API for Acme Corp event management. "
+        "Enforces attendee capacity, prevents duplicate signups, and provides JWT-protected management endpoints."
     ),
     version="1.0.0",
     lifespan=lifespan,
 )
 
 # ---------------------------------------------------------------------------
-# JWT dependency
+# Authentication dependencies
 # ---------------------------------------------------------------------------
 
 bearer_scheme = HTTPBearer(auto_error=False)
@@ -51,28 +50,44 @@ DbDep = Annotated[AsyncSession, Depends(get_db)]
 async def get_current_user(
     credentials: Annotated[Optional[HTTPAuthorizationCredentials], Security(bearer_scheme)],
     db: DbDep,
-):
-    """Dependency that extracts and validates the JWT bearer token.
+) -> models.User:
+    """Validate Bearer JWT and return current active user.
 
-    Raises HTTP 401 when the token is missing or invalid.
+    Raises HTTP 401 with standard WWW-Authenticate header when missing or invalid.
     """
-    if credentials is None:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Authentication required.")
+    unauthorized_exc = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
+    if not credentials:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication credentials were not provided",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
     payload = services.decode_access_token(credentials.credentials)
-    if payload is None:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired token.")
+    if not payload:
+        raise unauthorized_exc
 
-    user = await services.get_user_by_id(db, int(payload["sub"]))
-    if user is None:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found.")
+    # Safely convert sub claim to integer primary key
+    raw_sub = payload.get("sub")
+    if not raw_sub or not str(raw_sub).isdigit():
+        raise unauthorized_exc
+
+    user = await services.get_user_by_id(db, int(raw_sub))
+    if not user:
+        raise unauthorized_exc
+
     return user
 
 
-CurrentUser = Annotated[object, Depends(get_current_user)]
+CurrentUser = Annotated[models.User, Depends(get_current_user)]
 
 # ---------------------------------------------------------------------------
-# Auth routes
+# Auth routes (Public)
 # ---------------------------------------------------------------------------
 
 
@@ -81,10 +96,10 @@ CurrentUser = Annotated[object, Depends(get_current_user)]
     response_model=schemas.UserResponse,
     status_code=status.HTTP_201_CREATED,
     tags=["Auth"],
-    summary="Register a new user",
+    summary="Register a new user account",
 )
 async def register(data: schemas.UserCreate, db: DbDep):
-    """Create a new user account. Returns the created user (no password)."""
+    """Register an employee account. Raises 409 Conflict if username or email exists."""
     try:
         return await services.create_user(db, data)
     except ValueError as exc:
@@ -95,22 +110,23 @@ async def register(data: schemas.UserCreate, db: DbDep):
     "/auth/login",
     response_model=schemas.TokenResponse,
     tags=["Auth"],
-    summary="Login and obtain a JWT access token",
+    summary="Authenticate and receive JWT token",
 )
 async def login(data: schemas.LoginRequest, db: DbDep):
-    """Authenticate with username + password; returns a JWT bearer token."""
+    """Verify credentials and issue a signed Bearer JWT access token."""
     user = await services.authenticate_user(db, data.username, data.password)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid username or password.",
+            detail="Invalid username or password",
+            headers={"WWW-Authenticate": "Bearer"},
         )
     token = services.create_access_token(user.id, user.username)
     return schemas.TokenResponse(access_token=token)
 
 
 # ---------------------------------------------------------------------------
-# Event routes — GET endpoints are public; CUD requires authentication
+# Event routes (Public Read / Authenticated Write)
 # ---------------------------------------------------------------------------
 
 
@@ -119,10 +135,10 @@ async def login(data: schemas.LoginRequest, db: DbDep):
     response_model=schemas.EventResponse,
     status_code=status.HTTP_201_CREATED,
     tags=["Events"],
-    summary="Create a new event (auth required)",
+    summary="Create a new event (Authenticated)",
 )
 async def create_event(data: schemas.EventCreate, db: DbDep, _: CurrentUser):
-    """Create and persist a new event. Requires a valid JWT token."""
+    """Create a new event record. Requires JWT Bearer token."""
     return await services.create_event(db, data)
 
 
@@ -130,89 +146,98 @@ async def create_event(data: schemas.EventCreate, db: DbDep, _: CurrentUser):
     "/events",
     response_model=schemas.PaginatedEvents,
     tags=["Events"],
-    summary="List all events with optional filtering and pagination",
+    summary="List events with pagination and filtering",
 )
 async def list_events(
     db: DbDep,
-    skip: int = Query(0, ge=0, description="Number of records to skip"),
-    limit: int = Query(10, ge=1, le=100, description="Maximum records to return"),
+    skip: int = Query(0, ge=0, description="Records to skip for pagination"),
+    limit: int = Query(10, ge=1, le=100, description="Max records to return (1-100)"),
     title: Optional[str] = Query(None, description="Filter by title substring"),
-    date: Optional[str] = Query(None, description="Filter by date (YYYY-MM-DD)"),
+    date: Optional[date_type] = Query(None, description="Filter by event date (YYYY-MM-DD)"),
 ):
-    """Public endpoint. Supports pagination via `skip`/`limit` and filtering via `title`/`date`."""
-    total, items = await services.get_events(db, skip=skip, limit=limit, title=title, date=date)
+    """Public event catalog with offset pagination and optional title/date search filters."""
+    total, items = await services.get_events(db, skip=skip, limit=limit, title=title, filter_date=date)
     return schemas.PaginatedEvents(total=total, skip=skip, limit=limit, items=items)
 
 
 @app.get(
-    "/events/{event_id}",
+    "/events/{id}",
     response_model=schemas.EventResponse,
     tags=["Events"],
-    summary="Retrieve a specific event by ID",
+    summary="Retrieve an event by ID",
 )
-async def get_event(event_id: int, db: DbDep):
-    """Public endpoint. Returns 404 if the event does not exist."""
-    event = await services.get_event(db, event_id)
+async def get_event(
+    id: int = Path(..., gt=0, description="Positive event ID"),
+    db: DbDep = None,
+):
+    """Public endpoint to fetch detailed event information by primary ID."""
+    event = await services.get_event(db, id)
     if not event:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Event {event_id} not found.")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Event {id} not found")
     return event
 
 
 @app.put(
-    "/events/{event_id}",
+    "/events/{id}",
     response_model=schemas.EventResponse,
     tags=["Events"],
-    summary="Update an existing event (auth required)",
+    summary="Update an existing event (Authenticated)",
 )
-async def update_event(event_id: int, data: schemas.EventUpdate, db: DbDep, _: CurrentUser):
-    """Partial update — only the supplied fields are changed. Requires JWT."""
-    event = await services.update_event(db, event_id, data)
+async def update_event(
+    data: schemas.EventUpdate,
+    id: int = Path(..., gt=0, description="Positive event ID"),
+    db: DbDep = None,
+    _: CurrentUser = None,
+):
+    """Apply partial updates to an event. Requires JWT Bearer token."""
+    event = await services.update_event(db, id, data)
     if not event:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Event {event_id} not found.")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Event {id} not found")
     return event
 
 
 @app.delete(
-    "/events/{event_id}",
+    "/events/{id}",
     status_code=status.HTTP_204_NO_CONTENT,
     tags=["Events"],
-    summary="Delete an event (auth required)",
+    summary="Delete an event (Authenticated)",
 )
-async def delete_event(event_id: int, db: DbDep, _: CurrentUser):
-    """Permanently delete an event and all its registrations. Requires JWT."""
-    deleted = await services.delete_event(db, event_id)
+async def delete_event(
+    id: int = Path(..., gt=0, description="Positive event ID"),
+    db: DbDep = None,
+    _: CurrentUser = None,
+):
+    """Permanently remove an event and associated registrations. Requires JWT Bearer token."""
+    deleted = await services.delete_event(db, id)
     if not deleted:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Event {event_id} not found.")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Event {id} not found")
 
 
 # ---------------------------------------------------------------------------
-# Registration routes
+# Registration routes (Business-rule enforced)
 # ---------------------------------------------------------------------------
 
 
 @app.post(
-    "/events/{event_id}/registrations",
+    "/events/{id}/registrations",
     response_model=schemas.RegistrationResponse,
     status_code=status.HTTP_201_CREATED,
     tags=["Registrations"],
-    summary="Register a user for an event (auth required)",
+    summary="Register for an event (Authenticated)",
     responses={
         404: {"description": "Event or user not found"},
-        409: {"description": "Duplicate registration or event at capacity"},
+        409: {"description": "Duplicate registration or event capacity reached"},
     },
 )
 async def register_for_event(
-    event_id: int, data: schemas.RegistrationCreate, db: DbDep, _: CurrentUser
+    data: schemas.RegistrationCreate,
+    id: int = Path(..., gt=0, description="Target event ID"),
+    db: DbDep = None,
+    _: CurrentUser = None,
 ):
-    """Register *user_id* for the given event.
-
-    Business rules enforced:
-    - 404 if the event or user does not exist.
-    - 409 if the user is already registered.
-    - 409 if the event has reached its capacity.
-    """
+    """Register user for event. Enforces capacity ceiling and duplicate registration prevention."""
     try:
-        return await services.register_for_event(db, event_id, data.user_id)
+        return await services.register_for_event(db, id, data.user_id)
     except LookupError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
     except (ValueError, OverflowError) as exc:
@@ -220,30 +245,37 @@ async def register_for_event(
 
 
 @app.get(
-    "/events/{event_id}/registrations",
+    "/events/{id}/registrations",
     response_model=list[schemas.RegistrationResponse],
     tags=["Registrations"],
-    summary="View all registrations for an event",
+    summary="List all registrations for an event",
 )
-async def get_event_registrations(event_id: int, db: DbDep):
-    """Public endpoint. Returns 404 if the event does not exist."""
+async def get_event_registrations(
+    id: int = Path(..., gt=0, description="Target event ID"),
+    db: DbDep = None,
+):
+    """Public endpoint to inspect attendee registrations for a specific event."""
     try:
-        return await services.get_event_registrations(db, event_id)
+        return await services.get_event_registrations(db, id)
     except LookupError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
 
 
 @app.delete(
-    "/registrations/{registration_id}",
+    "/registrations/{id}",
     status_code=status.HTTP_204_NO_CONTENT,
     tags=["Registrations"],
-    summary="Cancel a registration (auth required)",
+    summary="Cancel a registration (Authenticated)",
 )
-async def cancel_registration(registration_id: int, db: DbDep, _: CurrentUser):
-    """Delete a registration by its id. Returns 404 if not found."""
-    deleted = await services.cancel_registration(db, registration_id)
+async def cancel_registration(
+    id: int = Path(..., gt=0, description="Registration ID to cancel"),
+    db: DbDep = None,
+    _: CurrentUser = None,
+):
+    """Cancel and delete an event registration. Requires JWT Bearer token."""
+    deleted = await services.cancel_registration(db, id)
     if not deleted:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Registration {registration_id} not found.",
+            detail=f"Registration {id} not found",
         )
