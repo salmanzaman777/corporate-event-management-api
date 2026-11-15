@@ -122,6 +122,11 @@ To see coverage:
 pytest --cov=app --cov-report=term-missing
 ```
 
+## Project Walkthrough & Demo Video Resources
+
+* **[Quick Demo Guide (18 Key Activity Points)](./QUICK_DEMO_GUIDE.md)**: Sequenced step-by-step walkthrough covering every CRUD action, business rule, and validation scenario.
+* **[Free Video & Audio Recording Guide](./RECORDING_GUIDE.md)**: Zero-cost, watermark-free baby steps for recording your screen and voice on Windows 10 and Google Chrome.
+
 ## AI Usage
 
 This project was built with **Antigravity (Claude Sonnet 4.6 Thinking)** as a development assistant.
