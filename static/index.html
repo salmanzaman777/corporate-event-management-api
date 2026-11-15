@@ -1,0 +1,1292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Acme Corp · Corporate Event Management</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #090d16;
+      --card-bg: rgba(18, 24, 38, 0.7);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --card-hover: rgba(255, 255, 255, 0.14);
+      --primary: #6366f1;
+      --primary-hover: #4f46e5;
+      --primary-glow: rgba(99, 102, 241, 0.35);
+      --accent: #06b6d4;
+      --text: #f3f4f6;
+      --text-muted: #94a3b8;
+      --danger: #ef4444;
+      --success: #10b981;
+      --warning: #f59e0b;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: radial-gradient(circle at 15% 15%, #131b2e 0%, #090d16 100%);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Ambient glow elements */
+    .ambient-glow {
+      position: fixed;
+      width: 500px;
+      height: 500px;
+      border-radius: 50%;
+      background: radial-gradient(circle, var(--primary-glow) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+      top: -100px;
+      right: -100px;
+      filter: blur(80px);
+    }
+    .ambient-glow-2 {
+      position: fixed;
+      width: 400px;
+      height: 400px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(6, 182, 212, 0.15) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+      bottom: -100px;
+      left: -100px;
+      filter: blur(90px);
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(20px);
+      background: rgba(9, 13, 22, 0.8);
+      border-bottom: 1px solid var(--card-border);
+    }
+
+    .nav-container {
+      max-width: 1300px;
+      margin: 0 auto;
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      text-decoration: none;
+      color: #fff;
+    }
+    .brand-logo {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #6366f1, #06b6d4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      box-shadow: 0 0 20px var(--primary-glow);
+    }
+    .brand-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    .brand-title span { color: var(--accent); }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .btn {
+      padding: 0.6rem 1.2rem;
+      border-radius: 10px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      text-decoration: none;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), var(--primary-hover));
+      color: #fff;
+      box-shadow: 0 4px 14px var(--primary-glow);
+    }
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px var(--primary-glow);
+    }
+    .btn-outline {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text);
+      border: 1px solid var(--card-border);
+    }
+    .btn-outline:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: var(--card-hover);
+    }
+    .btn-danger {
+      background: rgba(239, 68, 68, 0.15);
+      color: #fca5a5;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+    .btn-danger:hover {
+      background: rgba(239, 68, 68, 0.25);
+    }
+
+    .user-badge {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.4rem 0.8rem;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--card-border);
+      border-radius: 999px;
+      font-size: 0.85rem;
+    }
+    .user-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 8px var(--success);
+    }
+
+    /* Hero Banner */
+    .hero {
+      position: relative;
+      max-width: 1300px;
+      margin: 2.5rem auto 1.5rem;
+      padding: 0 2rem;
+      z-index: 1;
+    }
+    .hero-content {
+      background: linear-gradient(135deg, rgba(25, 33, 54, 0.6) 0%, rgba(15, 21, 37, 0.8) 100%);
+      border: 1px solid var(--card-border);
+      border-radius: 24px;
+      padding: 3rem 2.5rem;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+    }
+    .hero-content::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, transparent, var(--primary), var(--accent), transparent);
+    }
+    .hero-tag {
+      display: inline-block;
+      padding: 0.35rem 0.85rem;
+      background: rgba(99, 102, 241, 0.15);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      color: #a5b4fc;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-bottom: 1rem;
+    }
+    .hero-title {
+      font-size: 2.5rem;
+      font-weight: 800;
+      line-height: 1.15;
+      margin-bottom: 0.75rem;
+      letter-spacing: -0.03em;
+    }
+    .hero-desc {
+      color: var(--text-muted);
+      font-size: 1.05rem;
+      max-width: 650px;
+      margin-bottom: 1.75rem;
+      line-height: 1.6;
+    }
+
+    /* Top 6 Event Types Showcase */
+    .event-types-section {
+      max-width: 1300px;
+      margin: 2.5rem auto 1rem;
+      padding: 0 2rem;
+      z-index: 1;
+      position: relative;
+    }
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-bottom: 1.25rem;
+    }
+    .section-title {
+      font-size: 1.35rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    .section-sub {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+    }
+
+    .types-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1rem;
+    }
+    .type-card {
+      position: relative;
+      height: 170px;
+      border-radius: 18px;
+      overflow: hidden;
+      cursor: pointer;
+      border: 1px solid var(--card-border);
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 1.1rem;
+    }
+    .type-card img {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      object-fit: cover;
+      transition: transform 0.5s ease;
+      filter: brightness(0.65);
+    }
+    .type-card:hover {
+      transform: translateY(-4px);
+      border-color: var(--card-hover);
+      box-shadow: 0 12px 30px rgba(0,0,0,0.5);
+    }
+    .type-card:hover img {
+      transform: scale(1.08);
+      filter: brightness(0.75);
+    }
+    .type-card-overlay {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: linear-gradient(180deg, rgba(9,13,22,0.1) 0%, rgba(9,13,22,0.85) 100%);
+      z-index: 1;
+    }
+    .type-badge {
+      position: relative;
+      z-index: 2;
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--accent);
+      margin-bottom: 0.25rem;
+    }
+    .type-name {
+      position: relative;
+      z-index: 2;
+      font-size: 1rem;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    /* Filters Bar */
+    .controls-bar {
+      max-width: 1300px;
+      margin: 2rem auto 1.5rem;
+      padding: 0 2rem;
+      position: relative;
+      z-index: 1;
+    }
+    .filter-panel {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 1rem 1.25rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      align-items: center;
+      justify-content: space-between;
+      backdrop-filter: blur(12px);
+    }
+    .filter-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      align-items: center;
+      flex: 1;
+    }
+    .input-box {
+      background: rgba(9, 13, 22, 0.7);
+      border: 1px solid var(--card-border);
+      padding: 0.6rem 1rem;
+      border-radius: 10px;
+      color: #fff;
+      font-family: inherit;
+      font-size: 0.88rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .input-box:focus {
+      border-color: var(--primary);
+    }
+    .input-search { min-width: 240px; }
+
+    /* Events Grid */
+    .events-section {
+      max-width: 1300px;
+      margin: 0 auto 3rem;
+      padding: 0 2rem;
+      position: relative;
+      z-index: 1;
+    }
+    .events-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+      gap: 1.5rem;
+    }
+    .event-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      backdrop-filter: blur(12px);
+      transition: all 0.25s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .event-card:hover {
+      border-color: var(--card-hover);
+      transform: translateY(-3px);
+      box-shadow: 0 16px 32px rgba(0,0,0,0.35);
+    }
+    .event-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 0.75rem;
+      gap: 0.75rem;
+    }
+    .event-title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1.3;
+    }
+    .event-id-badge {
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.2rem 0.5rem;
+      background: rgba(255,255,255,0.06);
+      border-radius: 6px;
+      color: var(--text-muted);
+    }
+    .event-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 1rem;
+    }
+    .meta-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .meta-icon {
+      color: var(--primary);
+    }
+    .event-desc {
+      font-size: 0.88rem;
+      color: #cbd5e1;
+      line-height: 1.5;
+      margin-bottom: 1.25rem;
+      flex-grow: 1;
+    }
+
+    /* Capacity bar */
+    .capacity-box {
+      margin-bottom: 1.25rem;
+    }
+    .capacity-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 0.4rem;
+    }
+    .capacity-bar-bg {
+      height: 6px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .capacity-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--primary), var(--accent));
+      border-radius: 999px;
+      transition: width 0.4s ease;
+    }
+    .capacity-bar-fill.full {
+      background: var(--danger);
+    }
+
+    .event-card-actions {
+      display: flex;
+      gap: 0.5rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--card-border);
+    }
+    .event-card-actions .btn {
+      flex: 1;
+      justify-content: center;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.82rem;
+    }
+
+    /* Pagination */
+    .pagination-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 2rem;
+      padding: 1rem 0;
+      color: var(--text-muted);
+      font-size: 0.88rem;
+    }
+    .pagination-controls {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    /* Modals */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(8px);
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+    .modal-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .modal-box {
+      background: #111726;
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      width: 100%;
+      max-width: 520px;
+      padding: 2rem;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+      transform: scale(0.95);
+      transition: transform 0.25s ease;
+    }
+    .modal-overlay.active .modal-box {
+      transform: scale(1);
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+    .modal-title {
+      font-size: 1.3rem;
+      font-weight: 700;
+    }
+    .modal-close {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+    .form-group {
+      margin-bottom: 1rem;
+    }
+    .form-label {
+      display: block;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 0.4rem;
+    }
+    .form-input {
+      width: 100%;
+      background: rgba(9, 13, 22, 0.8);
+      border: 1px solid var(--card-border);
+      padding: 0.65rem 0.9rem;
+      border-radius: 8px;
+      color: #fff;
+      font-family: inherit;
+      font-size: 0.88rem;
+    }
+    .form-input:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+    textarea.form-input {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    /* Toast Notification */
+    .toast-container {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      z-index: 300;
+    }
+    .toast {
+      padding: 0.85rem 1.25rem;
+      border-radius: 12px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      animation: slideIn 0.3s ease;
+      min-width: 280px;
+      max-width: 420px;
+    }
+    .toast-success {
+      background: #064e3b;
+      border: 1px solid #059669;
+      color: #6ee7b7;
+    }
+    .toast-error {
+      background: #7f1d1d;
+      border: 1px solid #dc2626;
+      color: #fca5a5;
+    }
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 4rem 2rem;
+      grid-column: 1 / -1;
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="ambient-glow"></div>
+  <div class="ambient-glow-2"></div>
+
+  <!-- Navigation -->
+  <header>
+    <div class="nav-container">
+      <a href="#" class="brand">
+        <div class="brand-logo">A</div>
+        <div class="brand-title">Acme <span>Events</span></div>
+      </a>
+      <div class="nav-actions">
+        <a href="/docs" target="_blank" class="btn btn-outline" title="Open FastAPI Swagger Documentation">
+          ⚡ Swagger /docs
+        </a>
+        <div id="authPill" class="user-badge">
+          <span class="user-dot"></span>
+          <span id="userStatusText">Guest</span>
+        </div>
+        <button id="authBtn" class="btn btn-outline" onclick="openAuthModal()">Sign In</button>
+        <button class="btn btn-primary" onclick="openCreateModal()">+ New Event</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="hero-content">
+      <span class="hero-tag">Acme Corp · Enterprise Platform</span>
+      <h1 class="hero-title">Experience Tomorrow's Events, Today.</h1>
+      <p class="hero-desc">
+        Unified corporate management system powered by FastAPI & PostgreSQL. 
+        Enforcing real-time capacity rules, verified registration checks, and instant JWT authentication.
+      </p>
+      <div style="display:flex; gap:0.75rem;">
+        <button class="btn btn-primary" onclick="openCreateModal()">Schedule Corporate Event</button>
+        <button class="btn btn-outline" onclick="loadEvents()">Refresh Catalog</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- World's Top 6 Event Types Showcase -->
+  <section class="event-types-section">
+    <div class="section-header">
+      <div>
+        <h2 class="section-title">World's Premier Event Types</h2>
+        <p class="section-sub">Select any premier category to filter current company events</p>
+      </div>
+      <button class="btn btn-outline" style="font-size:0.78rem;" onclick="resetFilters()">Clear Filters</button>
+    </div>
+
+    <div class="types-grid">
+      <!-- 1. Product Launch -->
+      <div class="type-card" onclick="filterByType('Product Launch')">
+        <img src="https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&w=600&q=80" alt="Product Launch">
+        <div class="type-card-overlay"></div>
+        <span class="type-badge">Type 01</span>
+        <h3 class="type-name">🚀 Product Launch</h3>
+      </div>
+
+      <!-- 2. Tech Workshops -->
+      <div class="type-card" onclick="filterByType('Workshop')">
+        <img src="https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=600&q=80" alt="Tech Workshop">
+        <div class="type-card-overlay"></div>
+        <span class="type-badge">Type 02</span>
+        <h3 class="type-name">🛠️ Tech Workshop</h3>
+      </div>
+
+      <!-- 3. Team Building -->
+      <div class="type-card" onclick="filterByType('Team Building')">
+        <img src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=600&q=80" alt="Team Building">
+        <div class="type-card-overlay"></div>
+        <span class="type-badge">Type 03</span>
+        <h3 class="type-name">🤝 Team Building</h3>
+      </div>
+
+      <!-- 4. Corporate Conference -->
+      <div class="type-card" onclick="filterByType('Conference')">
+        <img src="https://images.unsplash.com/photo-1475721027785-f74eccf877e2?auto=format&fit=crop&w=600&q=80" alt="Corporate Conference">
+        <div class="type-card-overlay"></div>
+        <span class="type-badge">Type 04</span>
+        <h3 class="type-name">🎤 Conference</h3>
+      </div>
+
+      <!-- 5. Annual Gala & Awards -->
+      <div class="type-card" onclick="filterByType('Gala')">
+        <img src="https://images.unsplash.com/photo-1519671482749-fd09be7ccebf?auto=format&fit=crop&w=600&q=80" alt="Annual Gala">
+        <div class="type-card-overlay"></div>
+        <span class="type-badge">Type 05</span>
+        <h3 class="type-name">🏆 Annual Gala</h3>
+      </div>
+
+      <!-- 6. Executive Keynote -->
+      <div class="type-card" onclick="filterByType('Keynote')">
+        <img src="https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=600&q=80" alt="Executive Keynote">
+        <div class="type-card-overlay"></div>
+        <span class="type-badge">Type 06</span>
+        <h3 class="type-name">🌐 Executive Keynote</h3>
+      </div>
+    </div>
+  </section>
+
+  <!-- Controls / Search Bar -->
+  <section class="controls-bar">
+    <div class="filter-panel">
+      <div class="filter-group">
+        <input type="text" id="searchInput" class="input-box input-search" placeholder="🔍 Search event title..." oninput="debounceSearch()">
+        <input type="date" id="dateInput" class="input-box" onchange="loadEvents()">
+        <button class="btn btn-outline" onclick="resetFilters()">Reset</button>
+      </div>
+      <div>
+        <span id="eventCountBadge" style="font-size:0.85rem; color:var(--text-muted); font-weight:600;">Loading events...</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Event Cards Grid -->
+  <section class="events-section">
+    <div id="eventsGrid" class="events-grid">
+      <!-- Injected via JavaScript -->
+    </div>
+
+    <!-- Pagination Controls -->
+    <div class="pagination-bar">
+      <span id="paginationInfo">Showing 0 of 0</span>
+      <div class="pagination-controls">
+        <button id="prevBtn" class="btn btn-outline" onclick="prevPage()">← Previous</button>
+        <button id="nextBtn" class="btn btn-outline" onclick="nextPage()">Next →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Auth Modal (Login / Register) -->
+  <div id="authModal" class="modal-overlay">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="authModalTitle" class="modal-title">Sign In</h3>
+        <button class="modal-close" onclick="closeAuthModal()">&times;</button>
+      </div>
+      <form id="authForm" onsubmit="handleAuthSubmit(event)">
+        <div class="form-group">
+          <label class="form-label">Username</label>
+          <input type="text" id="authUsername" class="form-input" required placeholder="e.g. john_doe">
+        </div>
+        <div class="form-group" id="emailGroup" style="display:none;">
+          <label class="form-label">Corporate Email</label>
+          <input type="email" id="authEmail" class="form-input" placeholder="e.g. john@acmecorp.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input type="password" id="authPassword" class="form-input" required placeholder="Min 8 characters">
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:1.5rem;">
+          <a href="#" id="authToggleLink" style="color:var(--accent); font-size:0.85rem;" onclick="toggleAuthMode(event)">Need an account? Register</a>
+          <button type="submit" id="authSubmitBtn" class="btn btn-primary">Sign In</button>
+        </div>
+        <div style="margin-top:1rem; border-top:1px solid var(--card-border); padding-top:0.75rem; text-align:center;">
+          <button type="button" class="btn btn-outline" style="font-size:0.75rem;" onclick="fillDemoCredentials()">Fill Demo User</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Create Event Modal -->
+  <div id="createModal" class="modal-overlay">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 class="modal-title">Create Corporate Event</h3>
+        <button class="modal-close" onclick="closeCreateModal()">&times;</button>
+      </div>
+      <form id="createForm" onsubmit="handleCreateEvent(event)">
+        <div class="form-group">
+          <label class="form-label">Event Title</label>
+          <input type="text" id="createTitle" class="form-input" required placeholder="e.g. Q4 Global Tech Summit">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Description</label>
+          <textarea id="createDesc" class="form-input" placeholder="Brief event summary and agenda"></textarea>
+        </div>
+        <div class="form-group" style="display:grid; grid-template-columns: 1fr 1fr; gap:0.75rem;">
+          <div>
+            <label class="form-label">Event Date & Time</label>
+            <input type="datetime-local" id="createDate" class="form-input" required>
+          </div>
+          <div>
+            <label class="form-label">Max Capacity</label>
+            <input type="number" id="createCapacity" class="form-input" min="1" max="100000" value="50" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Location / Conference Room</label>
+          <input type="text" id="createLocation" class="form-input" required placeholder="e.g. HQ Auditorium / Virtual">
+        </div>
+        <div style="display:flex; justify-content:flex-end; gap:0.5rem; margin-top:1.5rem;">
+          <button type="button" class="btn btn-outline" onclick="closeCreateModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary">Publish Event</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Attendees / Registration Inspector Modal -->
+  <div id="attendeesModal" class="modal-overlay">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="attendeesModalTitle" class="modal-title">Event Attendees</h3>
+        <button class="modal-close" onclick="closeAttendeesModal()">&times;</button>
+      </div>
+      <div id="attendeesListContainer" style="max-height:300px; overflow-y:auto; margin-bottom:1.5rem;">
+        <!-- Injected list -->
+      </div>
+      <div style="display:flex; justify-content:flex-end;">
+        <button class="btn btn-outline" onclick="closeAttendeesModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <script>
+    const API_BASE = window.location.origin; // Same origin when served by FastAPI
+    let state = {
+      token: localStorage.getItem('acme_jwt_token') || null,
+      currentUser: JSON.parse(localStorage.getItem('acme_user') || 'null'),
+      skip: 0,
+      limit: 6,
+      total: 0,
+      searchQuery: '',
+      dateQuery: '',
+      isRegisterMode: false
+    };
+
+    let searchTimer = null;
+
+    // --- Initialization ---
+    document.addEventListener('DOMContentLoaded', () => {
+      updateAuthUI();
+      loadEvents();
+      // Set default datetime picker to tomorrow at 10 AM
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      tomorrow.setHours(10, 0, 0, 0);
+      document.getElementById('createDate').value = tomorrow.toISOString().slice(0, 16);
+    });
+
+    // --- Auth Management ---
+    function updateAuthUI() {
+      const statusText = document.getElementById('userStatusText');
+      const authBtn = document.getElementById('authBtn');
+      if (state.token && state.currentUser) {
+        statusText.textContent = `@${state.currentUser.username}`;
+        authBtn.textContent = 'Sign Out';
+        authBtn.onclick = logout;
+      } else {
+        statusText.textContent = 'Guest';
+        authBtn.textContent = 'Sign In';
+        authBtn.onclick = openAuthModal;
+      }
+    }
+
+    function openAuthModal() {
+      state.isRegisterMode = false;
+      renderAuthModal();
+      document.getElementById('authModal').classList.add('active');
+    }
+
+    function closeAuthModal() {
+      document.getElementById('authModal').classList.remove('active');
+    }
+
+    function toggleAuthMode(e) {
+      if (e) e.preventDefault();
+      state.isRegisterMode = !state.isRegisterMode;
+      renderAuthModal();
+    }
+
+    function renderAuthModal() {
+      document.getElementById('authModalTitle').textContent = state.isRegisterMode ? 'Register Account' : 'Sign In';
+      document.getElementById('authSubmitBtn').textContent = state.isRegisterMode ? 'Register' : 'Sign In';
+      document.getElementById('emailGroup').style.display = state.isRegisterMode ? 'block' : 'none';
+      document.getElementById('authToggleLink').textContent = state.isRegisterMode ? 'Already have an account? Sign In' : 'Need an account? Register';
+    }
+
+    function fillDemoCredentials() {
+      document.getElementById('authUsername').value = 'salman_dev';
+      document.getElementById('authPassword').value = 'Secret123!';
+      if (state.isRegisterMode) {
+        document.getElementById('authEmail').value = 'salman@acmecorp.com';
+      }
+    }
+
+    async function handleAuthSubmit(e) {
+      e.preventDefault();
+      const username = document.getElementById('authUsername').value.trim();
+      const password = document.getElementById('authPassword').value;
+
+      try {
+        if (state.isRegisterMode) {
+          const email = document.getElementById('authEmail').value.trim();
+          const regRes = await fetch(`${API_BASE}/auth/register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, email, password })
+          });
+          const regData = await regRes.json();
+          if (!regRes.ok) throw new Error(regData.detail || 'Registration failed');
+          showToast(`Account created for @${username}! Logging in...`, 'success');
+        }
+
+        // Login
+        const loginRes = await fetch(`${API_BASE}/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+        const loginData = await loginRes.json();
+        if (!loginRes.ok) throw new Error(loginData.detail || 'Authentication failed');
+
+        state.token = loginData.access_token;
+        state.currentUser = { username: username, id: parseJwt(loginData.access_token).sub };
+        localStorage.setItem('acme_jwt_token', state.token);
+        localStorage.setItem('acme_user', JSON.stringify(state.currentUser));
+
+        updateAuthUI();
+        closeAuthModal();
+        showToast(`Welcome back, @${username}!`, 'success');
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    function logout() {
+      state.token = null;
+      state.currentUser = null;
+      localStorage.removeItem('acme_jwt_token');
+      localStorage.removeItem('acme_user');
+      updateAuthUI();
+      showToast('Signed out successfully.', 'success');
+    }
+
+    function parseJwt(token) {
+      try {
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        return JSON.parse(window.atob(base64));
+      } catch (e) {
+        return {};
+      }
+    }
+
+    // --- Events Management ---
+    async function loadEvents() {
+      const search = document.getElementById('searchInput').value.trim();
+      const date = document.getElementById('dateInput').value;
+
+      let url = `${API_BASE}/events?skip=${state.skip}&limit=${state.limit}`;
+      if (search) url += `&title=${encodeURIComponent(search)}`;
+      if (date) url += `&date=${encodeURIComponent(date)}`;
+
+      try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        state.total = data.total;
+        renderEventsGrid(data.items);
+        updatePagination();
+      } catch (err) {
+        showToast(`Failed to load events: ${err.message}`, 'error');
+      }
+    }
+
+    function debounceSearch() {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(() => {
+        state.skip = 0;
+        loadEvents();
+      }, 300);
+    }
+
+    function filterByType(keyword) {
+      document.getElementById('searchInput').value = keyword;
+      state.skip = 0;
+      loadEvents();
+    }
+
+    function resetFilters() {
+      document.getElementById('searchInput').value = '';
+      document.getElementById('dateInput').value = '';
+      state.skip = 0;
+      loadEvents();
+    }
+
+    async function renderEventsGrid(events) {
+      const grid = document.getElementById('eventsGrid');
+      const countBadge = document.getElementById('eventCountBadge');
+      countBadge.textContent = `${state.total} Total Corporate Events`;
+
+      if (!events || events.length === 0) {
+        grid.innerHTML = `
+          <div class="empty-state">
+            <h3 style="margin-bottom:0.5rem; font-size:1.2rem;">No matching events found</h3>
+            <p style="font-size:0.9rem;">Try adjusting search terms or publish a new corporate event.</p>
+          </div>
+        `;
+        return;
+      }
+
+      // Fetch attendee counts in parallel
+      const enrichedEvents = await Promise.all(events.map(async (ev) => {
+        try {
+          const regRes = await fetch(`${API_BASE}/events/${ev.id}/registrations`);
+          const regs = regRes.ok ? await regRes.json() : [];
+          return { ...ev, attendeesCount: regs.length };
+        } catch {
+          return { ...ev, attendeesCount: 0 };
+        }
+      }));
+
+      grid.innerHTML = enrichedEvents.map(ev => {
+        const dateObj = new Date(ev.event_date);
+        const formattedDate = dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+        const formattedTime = dateObj.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+        const pct = Math.min(100, Math.round((ev.attendeesCount / ev.max_capacity) * 100));
+        const isFull = ev.attendeesCount >= ev.max_capacity;
+
+        return `
+          <div class="event-card">
+            <div>
+              <div class="event-card-header">
+                <h3 class="event-title">${escapeHtml(ev.title)}</h3>
+                <span class="event-id-badge">#${ev.id}</span>
+              </div>
+              <div class="event-meta">
+                <div class="meta-row">
+                  <span class="meta-icon">📅</span>
+                  <span>${formattedDate} · ${formattedTime}</span>
+                </div>
+                <div class="meta-row">
+                  <span class="meta-icon">📍</span>
+                  <span>${escapeHtml(ev.location)}</span>
+                </div>
+              </div>
+              <p class="event-desc">${escapeHtml(ev.description || 'No description provided.')}</p>
+            </div>
+
+            <div>
+              <div class="capacity-box">
+                <div class="capacity-label">
+                  <span>Capacity Status</span>
+                  <span>${ev.attendeesCount} / ${ev.max_capacity} Seats (${pct}%)</span>
+                </div>
+                <div class="capacity-bar-bg">
+                  <div class="capacity-bar-fill ${isFull ? 'full' : ''}" style="width: ${pct}%"></div>
+                </div>
+              </div>
+
+              <div class="event-card-actions">
+                <button class="btn btn-primary" onclick="registerForEvent(${ev.id}, '${escapeHtml(ev.title)}')">
+                  ${isFull ? 'Waitlist' : 'Register'}
+                </button>
+                <button class="btn btn-outline" onclick="inspectAttendees(${ev.id}, '${escapeHtml(ev.title)}')">
+                  Attendees
+                </button>
+                <button class="btn btn-danger" onclick="deleteEvent(${ev.id})" title="Delete event">
+                  ✕
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // --- Event Actions ---
+    function openCreateModal() {
+      if (!state.token) {
+        showToast('Authentication required to create events. Please sign in.', 'error');
+        openAuthModal();
+        return;
+      }
+      document.getElementById('createModal').classList.add('active');
+    }
+
+    function closeCreateModal() {
+      document.getElementById('createModal').classList.remove('active');
+    }
+
+    async function handleCreateEvent(e) {
+      e.preventDefault();
+      const title = document.getElementById('createTitle').value.trim();
+      const description = document.getElementById('createDesc').value.trim();
+      const event_date = new Date(document.getElementById('createDate').value).toISOString();
+      const max_capacity = parseInt(document.getElementById('createCapacity').value);
+      const location = document.getElementById('createLocation').value.trim();
+
+      try {
+        const res = await fetch(`${API_BASE}/events`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${state.token}`
+          },
+          body: JSON.stringify({ title, description, event_date, max_capacity, location })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Failed to create event');
+
+        showToast(`Event "${title}" published successfully!`, 'success');
+        closeCreateModal();
+        document.getElementById('createForm').reset();
+        loadEvents();
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    async function deleteEvent(eventId) {
+      if (!state.token) {
+        showToast('Authentication required to delete events. Please sign in.', 'error');
+        openAuthModal();
+        return;
+      }
+      if (!confirm(`Are you sure you want to delete event #${eventId}?`)) return;
+
+      try {
+        const res = await fetch(`${API_BASE}/events/${eventId}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${state.token}` }
+        });
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.detail || 'Delete failed');
+        }
+        showToast(`Event #${eventId} removed.`, 'success');
+        loadEvents();
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    // --- Registration Actions & Business Rules ---
+    async function registerForEvent(eventId, title) {
+      if (!state.token) {
+        showToast('Please sign in first to register for events.', 'error');
+        openAuthModal();
+        return;
+      }
+
+      const userId = state.currentUser ? state.currentUser.id : 1;
+
+      try {
+        const res = await fetch(`${API_BASE}/events/${eventId}/registrations`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${state.token}`
+          },
+          body: JSON.stringify({ user_id: parseInt(userId) })
+        });
+        const data = await res.json();
+
+        if (res.status === 409) {
+          // Business Rule caught: Duplicate or Capacity Limit
+          throw new Error(`⚠️ Business Rule Enforced: ${data.detail}`);
+        }
+        if (!res.ok) {
+          throw new Error(data.detail || 'Registration failed');
+        }
+
+        showToast(`Registered successfully for "${title}"!`, 'success');
+        loadEvents();
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    async function inspectAttendees(eventId, title) {
+      document.getElementById('attendeesModalTitle').textContent = `Attendees for "${title}"`;
+      const container = document.getElementById('attendeesListContainer');
+      container.innerHTML = `<div style="padding:1rem; color:var(--text-muted);">Fetching attendees...</div>`;
+      document.getElementById('attendeesModal').classList.add('active');
+
+      try {
+        const res = await fetch(`${API_BASE}/events/${eventId}/registrations`);
+        const regs = await res.json();
+        if (!res.ok) throw new Error(regs.detail || 'Could not load attendees');
+
+        if (regs.length === 0) {
+          container.innerHTML = `<div style="padding:1.5rem; text-align:center; color:var(--text-muted);">No employees registered yet.</div>`;
+          return;
+        }
+
+        container.innerHTML = regs.map(r => {
+          const regDate = new Date(r.registered_at).toLocaleString();
+          return `
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:0.75rem; border-bottom:1px solid var(--card-border);">
+              <div>
+                <div style="font-weight:600; font-size:0.9rem;">Attendee User #${r.user_id}</div>
+                <div style="font-size:0.75rem; color:var(--text-muted);">${regDate}</div>
+              </div>
+              <button class="btn btn-danger" style="padding:0.3rem 0.6rem; font-size:0.75rem;" onclick="cancelRegistration(${r.id}, ${eventId}, '${escapeHtml(title)}')">
+                Cancel
+              </button>
+            </div>
+          `;
+        }).join('');
+      } catch (err) {
+        container.innerHTML = `<div style="color:var(--danger); padding:1rem;">${err.message}</div>`;
+      }
+    }
+
+    async function cancelRegistration(registrationId, eventId, title) {
+      if (!state.token) {
+        showToast('Please sign in to cancel registrations.', 'error');
+        openAuthModal();
+        return;
+      }
+      try {
+        const res = await fetch(`${API_BASE}/registrations/${registrationId}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${state.token}` }
+        });
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.detail || 'Cancel failed');
+        }
+        showToast('Registration cancelled.', 'success');
+        inspectAttendees(eventId, title);
+        loadEvents();
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    function closeAttendeesModal() {
+      document.getElementById('attendeesModal').classList.remove('active');
+    }
+
+    // --- Pagination ---
+    function updatePagination() {
+      const page = Math.floor(state.skip / state.limit) + 1;
+      const totalPages = Math.max(1, Math.ceil(state.total / state.limit));
+      document.getElementById('paginationInfo').textContent = `Page ${page} of ${totalPages} (${state.total} events)`;
+      document.getElementById('prevBtn').disabled = (state.skip === 0);
+      document.getElementById('nextBtn').disabled = (state.skip + state.limit >= state.total);
+    }
+
+    function nextPage() {
+      if (state.skip + state.limit < state.total) {
+        state.skip += state.limit;
+        loadEvents();
+      }
+    }
+
+    function prevPage() {
+      if (state.skip >= state.limit) {
+        state.skip -= state.limit;
+        loadEvents();
+      }
+    }
+
+    // --- Helpers ---
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = `toast ${type === 'success' ? 'toast-success' : 'toast-error'}`;
+      toast.innerHTML = `<span>${type === 'success' ? '✓' : '⚠️'}</span> <span>${escapeHtml(message)}</span>`;
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(10px)';
+        toast.style.transition = 'all 0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+      }, 4000);
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+  </script>
+</body>
+</html>
