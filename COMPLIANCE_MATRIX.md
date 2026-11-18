@@ -1,7 +1,6 @@
 # Assignment 03: Corporate Event Management API
 ## Requirements Compliance Matrix & Verification Evidence
 
-**Student**: Salman Zaman (`salmanzaman777` / `salmanzaman777@gmail.com`)  
 **Project**: Corporate Event Management API (Acme Corp Internal Event System)  
 **Status**: 100% Fully Compliant across all Mandatory Requirements & All 5 Bonus Criteria  
 
@@ -89,10 +88,8 @@
 | Deliverable | Location / Artifact | Status |
 |---|---|:---:|
 | 1. Public GitHub Repository Link | `https://github.com/salmanzaman777/corporate-event-management-api` | **READY** |
-| 2. Complete Source Code | `Solution/` (`app/`, `static/`, `tests/`) | **COMPLETE** |
-| 3. Dependency Manifest | `Solution/requirements.txt` | **COMPLETE** |
-| 4. Technical README.md | `Solution/README.md` (Architecture, Setup, Execution, AI Policy) | **COMPLETE** |
-| 5. Demo Video Presentation Script | `Supporting Documents/DEMO_PRESENTATION_SCRIPT_5MIN.md` | **COMPLETE** |
-| 6. Screen Recording Setup Guide | `Supporting Documents/RECORDING_GUIDE.md` | **COMPLETE** |
-| 7. 18-Point Verification Runbook | `Supporting Documents/QUICK_DEMO_GUIDE.md` | **COMPLETE** |
-| 8. AI Usage Disclosure | Documented in `README.md` (Tool, Model, Prompts, Review) | **COMPLETE** |
+| 2. Complete Source Code | `app/`, `static/`, `tests/` | **COMPLETE** |
+| 3. Dependency Manifest | `requirements.txt` | **COMPLETE** |
+| 4. Technical Documentation | `README.md` (Architecture, Setup, Execution) | **COMPLETE** |
+| 5. Requirements Compliance Matrix | `COMPLIANCE_MATRIX.md` | **COMPLETE** |
+| 6. AI Usage Disclosure | Documented in `README.md` (Tool, Model, Prompts, Review) | **COMPLETE** |
