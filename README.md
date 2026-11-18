@@ -32,7 +32,7 @@ requirements.txt
 
 ```bash
 # Clone and enter the directory
-git clone <your-repo-url>
+git clone https://github.com/salmanzaman777/corporate-event-management-api.git
 cd corporate-event-management-api
 
 # Create a virtual environment
@@ -122,10 +122,14 @@ To see coverage:
 pytest --cov=app --cov-report=term-missing
 ```
 
-## Project Walkthrough & Demo Video Resources
+## Supporting Documentation & Submission Assets
 
-* **[Quick Demo Guide (18 Key Activity Points)](./QUICK_DEMO_GUIDE.md)**: Sequenced step-by-step walkthrough covering every CRUD action, business rule, and validation scenario.
-* **[Free Video & Audio Recording Guide](./RECORDING_GUIDE.md)**: Zero-cost, watermark-free baby steps for recording your screen and voice on Windows 10 and Google Chrome.
+For academic evaluation assets, including:
+- **5-Minute Technical Demo Presentation Script** (`DEMO_PRESENTATION_SCRIPT_5MIN.md`)
+- **Assignment Requirements Compliance Matrix** (`COMPLIANCE_MATRIX.md`)
+- **18-Point Verification Runbook & Screen Recording Setup Guide** (`QUICK_DEMO_GUIDE.md`, `RECORDING_GUIDE.md`)
+
+Refer to the accompanying `Supporting Documents/` directory outside this production repository.
 
 ## AI Usage
 
