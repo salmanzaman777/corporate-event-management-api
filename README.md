@@ -2,6 +2,8 @@
 
 Backend REST API for Acme Corp's internal event management system, built with **FastAPI**, **PostgreSQL**, **SQLAlchemy 2.0 async**, and **JWT authentication**.
 
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/salmanzaman777/corporate-event-management-api)
+
 ## Project Structure
 
 ```
