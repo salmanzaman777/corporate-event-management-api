@@ -122,11 +122,15 @@ To see coverage:
 pytest --cov=app --cov-report=term-missing
 ```
 
+## Requirements Compliance
+
+For the complete mapping of assignment specifications, mandatory CRUD endpoints, business rules, and bonus criteria against exact implementation code and test evidence, see:
+* **[Requirements Compliance Matrix](./COMPLIANCE_MATRIX.md)**
+
 ## Supporting Documentation & Submission Assets
 
-For academic evaluation assets, including:
+For academic evaluation and video recording assets:
 - **5-Minute Technical Demo Presentation Script** (`DEMO_PRESENTATION_SCRIPT_5MIN.md`)
-- **Assignment Requirements Compliance Matrix** (`COMPLIANCE_MATRIX.md`)
 - **18-Point Verification Runbook & Screen Recording Setup Guide** (`QUICK_DEMO_GUIDE.md`, `RECORDING_GUIDE.md`)
 
 Refer to the accompanying `Supporting Documents/` directory outside this production repository.
